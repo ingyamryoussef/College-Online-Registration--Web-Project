@@ -1,0 +1,15 @@
+﻿h3 {
+    text-align:center;
+    margin-bottom:20px;
+}
+label{
+    margin-bottom:10px;
+    margin-top:10px;
+}
+input{
+    border-radius:3px;
+}
+.login-button {
+    align-items: center;
+    border-radius: 3px;
+}

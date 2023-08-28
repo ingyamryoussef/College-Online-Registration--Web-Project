@@ -1,0 +1,31 @@
+﻿@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@page "/home/{id}/{pin}"
+<h3>Home</h3>
+<h6>Welcome, @student.Name</h6>
+<button @onclick="GoToRegistration">Online Registration</button>
+<button @onclick="GoToTimetable">Print Timetable</button>
+@code {
+    [Parameter]
+    public string? id { get; set; }
+    [Parameter]
+    public string? pin { get; set; }
+
+    private Student student = new Student();
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<Student>($"api/StudentLogin?id={id}&pin={pin}");
+        if (result != null)
+        {
+            student = result;
+        }
+    }
+    public void GoToRegistration()
+    {
+        NavigationManager.NavigateTo($"/registration/{student.StudentId}/{student.Pin}");
+    }
+    public void GoToTimetable()
+    {
+        NavigationManager.NavigateTo($"/timetable/{student.StudentId}/{student.Pin}");
+    }
+}

@@ -1,0 +1,18 @@
+
+#timetable[b-zoczzrl9dg] {
+    display: grid;
+    border-collapse: collapse;
+    margin: 20px auto;
+}
+
+th[b-zoczzrl9dg], td[b-zoczzrl9dg] {
+    border: 4px solid #ddd;
+    text-align: center;
+    width: 200px;
+}
+
+select[b-zoczzrl9dg] {
+    padding: 5px;
+    width: 250px;
+    font-size: 16px;
+}

@@ -1,0 +1,206 @@
+﻿@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@page "/registration/{student_id}/{student_pin}"
+@using Microsoft.AspNetCore.Components
+@inject IJSRuntime JSRuntime
+@using System;
+@using System.Collections.Generic;
+@using System.Text.Json;
+@using System.Net.Http.Json;
+@using System.Threading.Tasks;
+
+
+<h3>Registration</h3>
+
+<label for="course">Select a course:</label>
+  <select id="course" @bind="tempCourseName">
+    <option value="">Select...</option>
+    @foreach(var course in availableCourses)
+    {
+    <option value="@course.Name">@course.Name</option>
+    }
+    <!-- Add more options as needed -->
+  </select>
+  <button @onclick="AddCourse"> Add Course </button>
+  <table id="timetable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Saturday</th>
+        <th>Sunday</th>
+        <th>Monday</th>
+        <th>Tuesday</th>
+        <th>Wednesday</th>
+        <th>Thursday</th>
+        
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>8:00 AM</td>
+        <td id="sat-8-00">@cell[0]</td>
+        <td id="sun-8-00">@cell[1]</td>
+        <td id="mon-8-00">@cell[2]</td>
+        <td id="tue-8-00">@cell[3]</td>
+        <td id="wed-8-00">@cell[4]</td>
+        <td id="thu-8-00">@cell[5]</td>
+      </tr>
+      <tr>
+        <td>10:00 AM</td>
+        <td id="sat-10-00">@cell[6]</td>
+        <td id="sun-10-00">@cell[7]</td>
+        <td id="mon-10-00">@cell[8]</td>
+        <td id="tue-10-00">@cell[9]</td>
+        <td id="wed-10-00">@cell[10]</td>
+        <td id="thu-10-00">@cell[11]</td>
+      </tr>
+      <tr>
+        <td>12:00 AM</td>
+        <td id="sat-12-00">@cell[12]</td>
+        <td id="sun-12-00">@cell[13]</td>
+        <td id="mon-12-00">@cell[14]</td>
+        <td id="tue-12-00">@cell[15]</td>
+        <td id="wed-12-00">@cell[16]</td>
+        <td id="thu-12-00">@cell[17]</td>
+      </tr>
+      <tr>
+        <td>2:00 AM</td>
+        <td id="sat-2-00">@cell[18]</td>
+        <td id="sun-2-00">@cell[19]</td>
+        <td id="mon-2-00">@cell[20]</td>
+        <td id="tue-2-00">@cell[21]</td>
+        <td id="wed-2-00">@cell[22]</td>
+        <td id="thu-2-00">@cell[23]</td>
+        </tr>
+    </tbody>
+  </table>
+  <ol>
+    @if (selectedCourses.Count > 0)
+    {
+        @foreach(var s in selectedCourses)
+        {
+            <li>
+                @s.CourseCode : @s.Name
+                <button @onclick="() => RemoveCourse(s)" >Remove</button>
+            </li>
+        }       
+    }
+</ol>
+  
+<button @onclick="Register"> Register </button>
+<p>@message</p>
+@code {
+
+    [Parameter]
+    public string? student_id { get; set; }
+    [Parameter]
+    public string? student_pin { get; set; }
+
+    private Student student = new Student();
+    private List<Courses> availableCourses = new List<Courses>();
+    private List<Courses> selectedCourses = new List<Courses>();
+    private List<Courses> removedCourses = new List<Courses>();
+    private Courses tempCourse = new Courses();
+    private string tempCourseName = "";
+    private List<string> cell = new List<string>();
+    private Dictionary<string, int> timeSlots = new Dictionary<string, int>();
+    private List<string> daysOfWeek = new List<string> { "sat-8-00", "sat-10-00", "sat-12-00", "sun-2-00", "sun-8-00", "sun-10-00", "sun-12-00", "sun-2-00", "mon-8-00", "mon-10-00", "mon-12-00", "mon-2-00", "tue-8-00", "tue-10-00", "tue-12-00", "tue-2-00", "wed-8-00", "wed-10-00", "wed-12-00", "wed-2-00", "thu-8-00", "thu-10-00", "thu-12-00", "thu-2-00" };
+    private RegistrationPost registrationPost = new RegistrationPost();
+    private string message = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        for (int i = 0; i < 24; i++)
+        {
+            cell.Add(string.Empty);
+            timeSlots[$"{daysOfWeek[i]}"] = i;
+        }
+
+        var result_student = await Http.GetFromJsonAsync<Student>($"api/StudentLogin?id={student_id}&pin={student_pin}");
+        if(result_student!=null){
+            student = result_student;
+            var result = await Http.GetFromJsonAsync<List<Courses>>($"api/GetDepartmentCourses?college={student.College}&department={student.Department}");
+            if (result != null)
+            {
+                availableCourses = result;
+            }
+
+            var registeredCourses = await Http.GetFromJsonAsync<List<Courses>>($"api/GetRegisteredCourses?id={student_id}&pin={student_pin}");
+            if (registeredCourses != null && registeredCourses.Count > 0)
+            {
+                //selectedCourses = registeredCourses;
+                foreach(var r in registeredCourses)
+                {
+                    selectedCourses.Add(r);
+                    //message = "course added to selected courses list\n";
+                }
+            }
+            else{}
+            if (selectedCourses.Count > 0)
+            {
+                foreach (var s in selectedCourses)
+                {
+                    cell[timeSlots[$"{s.LectureTime}"]] = s.Name;
+                    cell[timeSlots[$"{s.SectionTime}"]] = s.Name;
+                }
+            }
+            else {}
+            //message = $"{registeredCourses[0].CourseId}";
+        }
+
+    }
+    public async Task AddCourse()
+    {
+
+        var result = await Http.GetFromJsonAsync<Courses>($"api/SelectCourse?college={student.College}&department={student.Department}&name={tempCourseName}");
+        if (result != null)
+        {
+            tempCourse = result;
+            bool exists = selectedCourses.Any(s => s.CourseId == tempCourse.CourseId);
+            //if (selectedCourses.Count==0 || (selectedCourses.Count>0 && tempCourse.CourseId != selectedCourses.Find(s => s.CourseId==tempCourse.CourseId).CourseId) )
+            if (selectedCourses.Count == 0 || (selectedCourses.Count > 0 && exists == false))
+            {
+                cell[timeSlots[$"{tempCourse.LectureTime}"]] = tempCourse.Name;
+                cell[timeSlots[$"{tempCourse.SectionTime}"]] = tempCourse.Name;
+
+                selectedCourses.Add(tempCourse);
+            }
+
+        }
+
+    }
+
+    public async Task RemoveCourse(Courses c)
+    {
+        bool removedBefore = removedCourses.Any(course=>course.CourseId==c.CourseId);
+        if (removedBefore == false)
+        {
+            removedCourses.Add(c);
+        }
+        cell[timeSlots[$"{c.LectureTime}"]] = "";
+        cell[timeSlots[$"{c.SectionTime}"]] = "";
+        selectedCourses.Remove(c);
+    }
+
+
+    private async Task Register()
+    {
+        foreach(var r in removedCourses)
+        {
+            //var result = await Http.GetFromJsonAsync<Courses>($"api/RemoveCourse?studentId={student_id}&courseId={r.CourseId}");
+            var result = await Http.DeleteAsync($"api/RemoveCourse/{student_id}/{r.CourseId}");
+        }
+
+
+        foreach(var s in selectedCourses)
+        {
+            registrationPost.RegistrationCourseId = s.CourseId;
+            registrationPost.RegistrationId = student_id;
+            string json = JsonSerializer.Serialize(registrationPost, new JsonSerializerOptions { WriteIndented = true } );
+            var response = await Http.PostAsJsonAsync<string>("api/MakeRegistration/Register", json);
+        }
+        message = "Done!";
+        
+        NavigationManager.NavigateTo($"/home/{student_id}/{student_pin}");
+    }
+}

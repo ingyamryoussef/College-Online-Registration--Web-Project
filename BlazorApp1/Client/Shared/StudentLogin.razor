@@ -1,0 +1,57 @@
+﻿@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Student Login</h3>
+<div class="login-form">
+<form>
+    <label for="loginid">Student ID:</label><br>
+    <input type="text" id="loginid" name="loginid" @bind="my_id"><br>
+    <label for="loginpin">Pin:</label><br>
+    <input type="text" id="loginpin" name="loginpin" @bind="my_pin" required><br><br>
+    <!--<input type="submit" value="Submit">-->
+    <!--<a href="@LoginFormSubmit(my_id,my_pin)" class="button">Click 2</a>-->
+</form>
+<!--<button onclick="@my_id = document.getElementById('loginid').value; @my_pin = document.getElementById('loginpin').value">Click 1</button>-->
+<button class="login-button" @onclick="LoginFormSubmit">Login</button>
+<p class="login-message">@message</p>
+</div>
+
+
+
+
+@code {
+    private string my_id = "";
+    private string my_pin = "";
+    private string message = "";
+    private Student student = new Student();
+
+    protected override async Task OnInitializedAsync()
+    {
+        //var myelementid = await JSInvokableAttribute<IJSObjectReference>("","");
+    }
+
+    public async Task LoginFormSubmit()
+    //public async Task LoginFormSubmit()
+    {
+        if (my_id == "" || my_pin=="")
+        {
+            message = "Please enter your ID and Pin";
+        }
+        else{
+        var result = await Http.GetFromJsonAsync<Student>($"api/StudentLogin?id={my_id}&pin={my_pin}");
+        //var result = await Http.GetFromJsonAsync<List<User>>("api/StudentLogin?id=1&pin=123");
+
+        if (result != null && result.StudentId!=null)
+        {
+            student = result;
+            NavigationManager.NavigateTo($"/home/{student.StudentId}/{student.Pin}");
+           
+        }
+        else
+        {
+            message = "failed, try again";
+        }
+        }
+
+    }
+}

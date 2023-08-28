@@ -1,0 +1,18 @@
+﻿
+#timetable {
+    display: grid;
+    border-collapse: collapse;
+    margin: 20px auto;
+}
+
+th, td {
+    border: 4px solid #ddd;
+    text-align: center; 
+    width: 200px;
+}
+
+select {
+    padding: 5px;
+    width: 250px;
+    font-size: 16px;
+}
